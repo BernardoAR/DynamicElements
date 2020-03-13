@@ -95,9 +95,8 @@ export class DynamicElements {
    */
   _buttonRemove() {
     const btnRemove = document.createElement('a');
-    const iconRemove = document.createElement('i');
     btnRemove.setAttribute('class', 'remove');
-    btnRemove.appendChild(iconRemove);
+    btnRemove.innerHTML = 'Remove';
     return btnRemove;
   }
   /**
@@ -141,7 +140,7 @@ export class DynamicElements {
   _addDropdownValues(dropown, values) {
     for (let value in values) {
       let opt = document.createElement('option');
-      opt.appendChild(document.createTextNode(values[value].titulo));
+      opt.appendChild(document.createTextNode(values[value].title));
       opt.value = values[value].id;
       dropown.appendChild(opt);
     }
