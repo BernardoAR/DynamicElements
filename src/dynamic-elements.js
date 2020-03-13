@@ -39,8 +39,8 @@ export class DynamicElements {
     // Adiciona um listener de remoção de elemento dinâmico
     document.addEventListener('click', e => {
       let target = e.target;
-      if (target.closest('.remove')) {
-        target.closest('.divelement').remove();
+      if (target.closest('.remove-de')) {
+        target.closest('.div-element-de').remove();
       }
     });
   }
@@ -58,7 +58,7 @@ export class DynamicElements {
    */
   _divRow() {
     const divRow = document.createElement('div');
-    divRow.setAttribute('class', 'divelement');
+    divRow.setAttribute('class', 'div-element-de');
     return divRow;
   }
   /**
@@ -95,7 +95,7 @@ export class DynamicElements {
    */
   _buttonRemove() {
     const btnRemove = document.createElement('a');
-    btnRemove.setAttribute('class', 'remove');
+    btnRemove.setAttribute('class', 'remove-de');
     btnRemove.innerHTML = 'Remove';
     return btnRemove;
   }
@@ -105,6 +105,7 @@ export class DynamicElements {
    */
   _file(onChange) {
     const file = document.createElement('input');
+    file.setAttribute('class', 'file-de'); // Class for css manipulation
     file.setAttribute('type', 'file');
     file.setAttribute('id', `${this.nome}[]`);
     file.addEventListener('change', onChange);
@@ -116,6 +117,7 @@ export class DynamicElements {
    */
   _text(onChange) {
     const text = document.createElement('input');
+    text.setAttribute('class', 'text-de'); // Class for css manipulation
     text.setAttribute('type', 'text');
     text.setAttribute('id', `${this.nome}[]`);
     text.addEventListener('change', onChange);
@@ -127,6 +129,7 @@ export class DynamicElements {
    */
   _dropdown(onChange) {
     const dropdown = document.createElement('select');
+    dropdown.setAttribute('class', 'dropdown-de'); // Class for css manipulation
     dropdown.setAttribute('type', 'select');
     dropdown.setAttribute('id', `${this.nome}[]`);
     dropdown.addEventListener('change', onChange);
