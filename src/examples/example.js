@@ -8,9 +8,13 @@ const addDropdown = new DynamicElements(
   'dropdownPost',
   'divAddDropdown'
 );
-const value = [{ id: '1', title: "I'm a value" }];
+const value = [
+  { id: '1', title: "I'm a value" },
+  { id: '2', title: "I'm a second value" }
+];
 addDropdown.addElement({
   labelText: "I'm a dropdown",
   inputName: 'dropdown',
+  onChange: "alert('I am a onchange');",
   values: value
 });

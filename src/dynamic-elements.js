@@ -108,7 +108,7 @@ export class DynamicElements {
     file.setAttribute('class', 'file-de'); // Class for css manipulation
     file.setAttribute('type', 'file');
     file.setAttribute('id', `${this.nome}[]`);
-    file.addEventListener('change', onChange);
+    file.setAttribute('onchange', onChange);
     return file;
   }
   /**
@@ -120,7 +120,7 @@ export class DynamicElements {
     text.setAttribute('class', 'text-de'); // Class for css manipulation
     text.setAttribute('type', 'text');
     text.setAttribute('id', `${this.nome}[]`);
-    text.addEventListener('change', onChange);
+    text.setAttribute('onchange', onChange);
     return text;
   }
   /**
@@ -132,7 +132,7 @@ export class DynamicElements {
     dropdown.setAttribute('class', 'dropdown-de'); // Class for css manipulation
     dropdown.setAttribute('type', 'select');
     dropdown.setAttribute('id', `${this.nome}[]`);
-    dropdown.addEventListener('change', onChange);
+    dropdown.setAttribute('onchange', onChange);
     return dropdown;
   }
   /**
