@@ -3,203 +3,144 @@
  * @author Bernardo Alves Roballo
  * @version 1.0
  */
-export class DynamicElements {
+function dynamicElements(button, name, div) {
+  let elements = [];
+  let buttonAdd = false;
+  let buttonRemove = false;
+  let order = 0;
   /**
-   * Construtor com o básico necessário para a criação de um elemento dinâmico
-   * @param {string} botao - Nome do botão que será utilizado para a ação de criar elemento
-   * @param {string} nome - Nome utilizado para o input, utilizado como post
-   * - Exemplo: nome = teste
-   * - <input id="teste[]">
-   * @param {string} div - Nome do container onde será colocado os elementos
+   * Adiciona um elemento para a lista de elementos para a ordem do dynamic
+   * @param {Array[json]} array
+   *
+   @param {object} param
+   @param {string} param.labelText
+   @param {string} param.inputName
+   @param {method} param.onChange
+   @param {int} param.ordem
+   @param {array} param.values
    */
-  constructor(botao, nome, div) {
-    this.botao = botao;
-    this.nome = nome;
-    this.div = div;
-    // Índice utilizado para conseguir colocar uma atribuição de manipulação mais fácil
-    this.indice = 0;
-    // Variável utilizada para saber como será a ordem do elemento: {ordem: elemento}
-    this.ordem = {};
-    // Colocando os métodos para ouvir certas ações
-    this._onClickButton(); // Clique do botao de adicionar
-    this._removeElementAction(); // Ação de remover
+  function addElements(array) {
+    if (!buttonAdd) _onClickButton();
+    if (!buttonRemove) _onClickRemoveElement();
+    if (array.constructor === Array) {
+      for (let i in array) {
+        let div = _createElement(array[i]);
+        let pos = array[i].input.order ?? order++;
+        elements[pos] = div;
+      }
+    } else {
+      throw "The type isn't array";
+    }
   }
   /**
-   * Método utilizado para o onclick do botão de add
+   * onClick to create elements
    */
-  _onClickButton() {
-    const button = document.getElementById(this.botao);
-    button.addEventListener('click', event => this.createElements(event));
+  function _onClickButton() {
+    document
+      .getElementById(button)
+      .addEventListener('click', (event) => _createElements(event));
   }
   /**
    * Método utilizado para a ação de remoção
    * @param {element} button
    */
-  _removeElementAction() {
+  function _onClickRemoveElement() {
     // Adiciona um listener de remoção de elemento dinâmico
-    document.addEventListener('click', e => {
+    document.addEventListener('click', (e) => {
       let target = e.target;
       if (target.closest('.remove-de')) {
         target.closest('.div-element-de').remove();
       }
     });
   }
-  /**
-   * Método utilizado para criar uma label de texto de descrição
-   * @param {String} labelText
-   */
-  _label(labelText = '') {
-    const label = document.createElement('label');
-    label.innerHTML = labelText;
-    return label;
-  }
-  /**
-   * Método utilizado para criar uma div de Row
-   */
-  _divRow() {
-    const divRow = document.createElement('div');
-    divRow.setAttribute('class', 'div-element-de');
-    return divRow;
-  }
-  /**
-   * Método utilizado para fazer o append no div da row
-   * @param {object} label
-   * @param {object} divInput
-   * @param {object} btnRemove
-   */
-  _divRowAppend(label, divInput, btnRemove) {
-    const divRow = this._divRow();
-    divRow.append(label);
-    divRow.append(divInput);
-    divRow.append(btnRemove);
-    return divRow;
-  }
-  /**
-   * Método utilizado para criar uma div de Input
-   */
-  _divInput() {
-    const divInput = document.createElement('div');
-    return divInput;
-  }
-  /**
-   * Método utilizado para dar append do input na div de input
-   * @param {object} input
-   */
-  _divInputAppend(input) {
-    const divInput = this._divInput();
-    divInput.appendChild(input);
-    return divInput;
-  }
-  /**
-   * Método utilizado para criar um botão de remover
-   */
-  _buttonRemove() {
-    const btnRemove = document.createElement('a');
-    btnRemove.setAttribute('class', 'remove-de');
-    btnRemove.innerHTML = 'Remove';
-    return btnRemove;
-  }
-  /**
-   * Método utilizado para adicionar um elemento de arquivo
-   * @param {method} onChange
-   */
-  _file(onChange) {
-    const file = document.createElement('input');
-    file.setAttribute('class', 'file-de'); // Class for css manipulation
-    file.setAttribute('type', 'file');
-    file.setAttribute('id', `${this.nome}[]`);
-    file.setAttribute('onchange', onChange);
-    return file;
+  function addValues(array) {
+    for (let i in array) {
+      _createElements(array[i]);
+    }
   }
   /**
    * Método utilizado para adicionar um elemento de texto
    * @param {method} onChange
    */
-  _text(onChange) {
-    const text = document.createElement('input');
-    text.setAttribute('class', 'text-de'); // Class for css manipulation
-    text.setAttribute('type', 'text');
-    text.setAttribute('id', `${this.nome}[]`);
-    text.setAttribute('onchange', onChange);
-    return text;
+  function _createElement(json) {
+    const input = _input(json.input);
+    const div = document.createElement('div');
+    if (json.input.values) _addSelectValues(input, json.input.values);
+    typeof json.label == 'undefined'
+      ? div.append(input)
+      : div.append(_label(json.label), input);
+    return div;
   }
   /**
-   * Método utilizado para adicionar um elemento de select
-   * @param {method} onChange
+   * Método utilizado para criar uma label de texto de descrição
+   * @param {String} labelText
    */
-  _dropdown(onChange) {
-    const dropdown = document.createElement('select');
-    dropdown.setAttribute('class', 'dropdown-de'); // Class for css manipulation
-    dropdown.setAttribute('type', 'select');
-    dropdown.setAttribute('id', `${this.nome}[]`);
-    dropdown.setAttribute('onchange', onChange);
-    return dropdown;
+  function _label(json) {
+    const label = document.createElement('label');
+    label.innerHTML = json.text;
+    label.setAttribute('class', json.classes ?? '');
+    return label;
+  }
+  function _input(json) {
+    const input = document.createElement(
+      json.type == 'select' ? 'select' : 'input'
+    );
+    input.setAttribute('type', json.type);
+    input.setAttribute('name', `${name}[${json.inputName}][]`);
+    input.setAttribute('class', json.classes ?? '');
+    input.setAttribute('onchange', json.onChange ?? '');
+    if (typeof json.value !== 'undefined') input.value = json.value;
+    return input;
+  }
+  /**
+   * Método utilizado para criar um botão de remover
+   */
+  function _buttonRemove() {
+    const btnRemove = document.createElement('a');
+    btnRemove.setAttribute('class', 'remove-de');
+    btnRemove.innerHTML = 'Remove';
+    return btnRemove;
+  }
+  function _divRow() {
+    const divRow = document.createElement('div');
+    divRow.setAttribute('class', 'div-element-de');
+    return divRow;
   }
   /**
    * Método utilizado para adicionar os valores do dropdown
-   * @param {object} dropown
+   * @param {object} select
    * @param {array} values
    */
-  _addDropdownValues(dropown, values) {
-    for (let value in values) {
+  function _addSelectValues(select, values) {
+    for (let i in values) {
       let opt = document.createElement('option');
-      opt.appendChild(document.createTextNode(values[value].title));
-      opt.value = values[value].id;
-      dropown.appendChild(opt);
+      opt.appendChild(document.createTextNode(values[i].title));
+      opt.value = values[i].id;
+      select.appendChild(opt);
     }
-  }
-  /**
-   *  Método utilizado para colocar o dropdown adicionando os seus respectivos valores
-   * @param {method} onChange
-   * @param {array} values
-   */
-  _dropdownAdd(onChange, values) {
-    const dropdown = this._dropdown(onChange);
-    this._addDropdownValues(dropdown, values);
-    return dropdown;
-  }
-  /**
-   *
-   * @param {string} inputName - Nome da entrada
-   * @param {object} optional - {onChange, values}
-   */
-  _chooseInput(inputName, optional) {
-    switch (inputName) {
-      case 'file':
-        return this._file(optional.onChange);
-      case 'text':
-        return this._text(optional.onChange);
-      case 'dropdown':
-        return this._dropdownAdd(optional.onChange, optional.values);
-    }
-  }
-  /**
-   * Adiciona um elemento para a lista de elementos para a ordem do dynamic
-   * @param {object} param
-   * @param {string} param.labelText
-   * @param {string} param.inputName
-   * @param {method} param.onChange
-   * @param {int} param.ordem
-   * @param {array} param.values
-   */
-  addElement({ labelText, inputName, onChange, ordem, values }) {
-    const label = this._label(labelText);
-    const btnRemove = this._buttonRemove();
-    const input = this._chooseInput(inputName, {
-      onChange: onChange,
-      values: values
-    });
-    const divInput = this._divInputAppend(input); // Append Input
-    const divRow = this._divRowAppend(label, divInput, btnRemove); // Append na Row
-    this.ordem[ordem] = divRow;
   }
   /**
    * Cria os elementos colocados
    */
-  createElements() {
-    const globalDiv = document.getElementById(this.div);
-    for (let element in this.ordem) {
-      globalDiv.appendChild(this.ordem[element].cloneNode(true));
+  function _createElements(array) {
+    const globalDiv = document.getElementById(div);
+    const divRow = _divRow();
+    for (let element in elements) {
+      let clone = elements[element].cloneNode(true);
+      if (clone.children[0].localName == 'label') {
+        clone.children[0].innerHTML =
+          array[element]?.labelText ?? clone.children[0].innerHTML;
+        clone.children[1].value = array[element]?.value ?? '';
+      } else {
+        console.log(clone.children[0].value);
+        clone.children[0].value =
+          array[element]?.value ?? clone.children[0].value;
+      }
+      divRow.append(clone);
     }
+    divRow.append(_buttonRemove());
+    globalDiv.append(divRow);
   }
+  return { addElements, addValues };
 }
+export default dynamicElements;
