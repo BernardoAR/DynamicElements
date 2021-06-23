@@ -1,24 +1,22 @@
+'use strict';
 /**
  * Nova classe para os elementos dinâmicos
  * @author Bernardo Alves Roballo
  * @version 1.0
  */
-function dynamicElements(button, name, div) {
+function dynamicElements(button, div) {
+  let dynamicValues = { button: button, div: div };
+  let haveDynamicBtn = false;
+  let config = { btnRemove: undefined, divRow: undefined };
+  let jsonValues = [];
   let elements = [];
   let buttonAdd = false;
   let buttonRemove = false;
   let order = 0;
-  /**
-   * Adiciona um elemento para a lista de elementos para a ordem do dynamic
-   * @param {Array[json]} array
-   *
-   @param {object} param
-   @param {string} param.labelText
-   @param {string} param.inputName
-   @param {method} param.onChange
-   @param {int} param.ordem
-   @param {array} param.values
-   */
+  function configuration(json) {
+    config.btnRemove = json.btnRemove;
+    config.divRow = json.divRow;
+  }
   function addElements(array) {
     if (!buttonAdd) _onClickButton();
     if (!buttonRemove) _onClickRemoveElement();
@@ -27,6 +25,7 @@ function dynamicElements(button, name, div) {
         let div = _createElement(array[i]);
         let pos = array[i].input.order ?? order++;
         elements[pos] = div;
+        jsonValues[pos] = array[i];
       }
     } else {
       throw "The type isn't array";
@@ -36,14 +35,14 @@ function dynamicElements(button, name, div) {
    * onClick to create elements
    */
   function _onClickButton() {
-    document
-      .getElementById(button)
-      .addEventListener('click', (event) => _createElements(event));
+    document.addEventListener('click', (e) => {
+      let target = e.target;
+      if (target.closest(`.${dynamicValues.button}`)) {
+        _createElements(null, target);
+      }
+    });
   }
-  /**
-   * Método utilizado para a ação de remoção
-   * @param {element} button
-   */
+
   function _onClickRemoveElement() {
     // Adiciona um listener de remoção de elemento dinâmico
     document.addEventListener('click', (e) => {
@@ -53,28 +52,50 @@ function dynamicElements(button, name, div) {
       }
     });
   }
-  function addValues(array) {
+  function addValues(array, target = null) {
     for (let i in array) {
-      _createElements(array[i]);
+      _createElements(array[i], target);
     }
   }
-  /**
-   * Método utilizado para adicionar um elemento de texto
-   * @param {method} onChange
-   */
+
   function _createElement(json) {
-    const input = _input(json.input);
+    let input;
+    switch (json.input.type) {
+      case 'dynamic':
+        input = _dynamic(json.input.dynamic, json.input);
+        break;
+      default:
+        input = _input(json.input);
+    }
     const div = document.createElement('div');
+    if (typeof json.div != 'undefined')
+      div.setAttribute('class', `${json.div.classes}`);
     if (json.input.values) _addSelectValues(input, json.input.values);
     typeof json.label == 'undefined'
       ? div.append(input)
       : div.append(_label(json.label), input);
     return div;
   }
-  /**
-   * Método utilizado para criar uma label de texto de descrição
-   * @param {String} labelText
-   */
+  function _dynamic(dynamic, json) {
+    haveDynamicBtn = true;
+    const div = document.createElement('div');
+    div.setAttribute('class', `${'container' + (json.class ?? '')}`);
+    const divAdd = document.createElement('div');
+    divAdd.classList.add(dynamic.dynamicValues.div);
+    const button = document.createElement('a');
+    button.setAttribute(
+      'class',
+      `${dynamic.dynamicValues.button} ${
+        json.button.classes ?? ''
+      } dynamic-button`
+    );
+    button.classList.add(dynamic.dynamicValues.button);
+    if (typeof json.button.value !== 'undefined')
+      button.innerHTML = json.button.value;
+    div.append(divAdd, button);
+    return div;
+  }
+
   function _label(json) {
     const label = document.createElement('label');
     label.innerHTML = json.text;
@@ -86,31 +107,28 @@ function dynamicElements(button, name, div) {
       json.type == 'select' ? 'select' : 'input'
     );
     input.setAttribute('type', json.type);
-    input.setAttribute('name', `${name}[${json.inputName}][]`);
+    input.setAttribute('name', `${json.inputName}`);
     input.setAttribute('class', json.classes ?? '');
     input.setAttribute('onchange', json.onChange ?? '');
     if (typeof json.value !== 'undefined') input.value = json.value;
     return input;
   }
-  /**
-   * Método utilizado para criar um botão de remover
-   */
+
   function _buttonRemove() {
     const btnRemove = document.createElement('a');
-    btnRemove.setAttribute('class', 'remove-de');
-    btnRemove.innerHTML = 'Remove';
+    btnRemove.setAttribute(
+      'class',
+      `remove-de ${config.btnRemove?.classes ?? ''}`
+    );
+    btnRemove.innerHTML = config.btnRemove?.name ?? 'Remove';
     return btnRemove;
   }
-  function _divRow() {
-    const divRow = document.createElement('div');
-    divRow.setAttribute('class', 'div-element-de');
-    return divRow;
+  function _div(classe) {
+    const div = document.createElement('div');
+    div.setAttribute('class', `${classe}`);
+    return div;
   }
-  /**
-   * Método utilizado para adicionar os valores do dropdown
-   * @param {object} select
-   * @param {array} values
-   */
+
   function _addSelectValues(select, values) {
     for (let i in values) {
       let opt = document.createElement('option');
@@ -119,28 +137,92 @@ function dynamicElements(button, name, div) {
       select.appendChild(opt);
     }
   }
+  function _getParentUntil(classe, target) {
+    // Pega dois elements, para caso o queryselector tenha mais de um, ver a classe do anterior
+    let element = target;
+    let oldelement = target;
+    while (element.querySelector(`.${classe}`) == null) {
+      oldelement = element;
+      element = element.parentElement;
+    }
+    return oldelement.classList.contains(classe)
+      ? oldelement
+      : element.querySelector(`.${classe}`);
+  }
   /**
    * Cria os elementos colocados
    */
-  function _createElements(array) {
-    const globalDiv = document.getElementById(div);
-    const divRow = _divRow();
+  function _createElements(array, target = null) {
+    let dynamicName = null;
+    if (target?.parentElement != (null && undefined)) {
+      if (
+        target
+          .closest(`.${dynamicValues.button}`)
+          .classList.contains('dynamic-button')
+      ) {
+        console.log('Antes Target');
+        dynamicName = _getParentUntil('dynamic-div', target).querySelector(
+          '.global-name'
+        ).value;
+        console.log(_getParentUntil('dynamic-div', target));
+      }
+    }
+
+    const globalDiv =
+      target == null
+        ? document.querySelector(`.${div}`)
+        : _getParentUntil(div, target);
+    const divRow = _div(
+      `div-element-de ${config.divRow?.classes ?? ''} ${
+        haveDynamicBtn ? 'dynamic-div' : ''
+      }`
+    );
     for (let element in elements) {
       let clone = elements[element].cloneNode(true);
-      if (clone.children[0].localName == 'label') {
-        clone.children[0].innerHTML =
-          array[element]?.labelText ?? clone.children[0].innerHTML;
-        clone.children[1].value = array[element]?.value ?? '';
-      } else {
-        console.log(clone.children[0].value);
-        clone.children[0].value =
-          array[element]?.value ?? clone.children[0].value;
+      switch (clone.children[0].localName) {
+        case 'div':
+          if (array != null) {
+            jsonValues[element].input.dynamic.addValues(
+              array[element]?.value,
+              clone
+            );
+          }
+          break;
+        case 'label':
+          clone.children[0].innerHTML =
+            array != null
+              ? array[element]?.labelText ?? clone.children[0].innerHTML
+              : clone.children[0].innerHTML;
+          clone.children[1].name =
+            (dynamicName ?? '') +
+            (array != null
+              ? array[element]?.inputName ?? clone.children[1].name
+              : clone.children[1].name);
+          clone.children[1].readOnly =
+            array != null ? array[element]?.readOnly ?? 0 : 0;
+          clone.children[1].value =
+            array != null
+              ? array[element]?.value ?? clone.children[1].value
+              : clone.children[1].value;
+          break;
+        default:
+          clone.children[0].disabled =
+            array != null ? array[element]?.readOnly ?? 0 : 0;
+          clone.children[0].name =
+            array != null
+              ? array[element]?.inputName ?? clone.children[0].name
+              : clone.children[0].name;
+          clone.children[0].value =
+            array != null
+              ? array[element]?.value ?? clone.children[0].value
+              : clone.children[0].value;
       }
+
       divRow.append(clone);
     }
     divRow.append(_buttonRemove());
     globalDiv.append(divRow);
   }
-  return { addElements, addValues };
+  return { addElements, addValues, configuration, dynamicValues };
 }
 export default dynamicElements;
